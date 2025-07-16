@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zakup Pakietu Premium</title>
+  <style>
+    body {
+      background-color: #f5f5dc; /* beżowe retro */
+      font-family: 'Georgia', serif;
+      color: #2e2e2e;
+      padding: 2rem;
+    }
+    h1 {
+      color: #8b0000; /* ciemnoczerwony */
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    input,
+    button {
+      padding: 0.5rem;
+      margin-top: 0.3rem;
+      width: 100%;
+      max-width: 400px;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #006400; /* ciemnozielony */
+      color: white;
+      border: none;
+      cursor: pointer;
+      margin-top: 1.5rem;
+    }
+    button:hover {
+      background-color: #004d00;
+    }
+    .result {
+      margin-top: 2rem;
+      padding: 1rem;
+      background-color: #eee8d5;
+      border: 1px solid #8b0000;
+      color: #000000;
+      max-width: 600px;
+    }
+    .error {
+      margin-top: 1rem;
+      color: red;
+      font-weight: bold;
+    }
+    .summary {
+      margin-top: 1.5rem;
+      background-color: #fdf6e3;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      max-width: 500px;
+    }
+    .confirm-button {
+      background-color: #8b0000;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Zakup Pakietu Premium</h1>
+  <form id="purchaseForm">
+    <label for="name">Imię i nazwisko:</label>
+    <input type="text" id="name" name="name" required />
+
+    <label for="email">Adres e-mail:</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="phone">Numer telefonu:</label>
+    <input type="tel" id="phone" name="phone" required />
+
+    <label for="amount">Kwota pakietu (zł):</label>
+    <input type="text" id="amount" name="amount" placeholder="np. 6,99" required />
+
+    <label>
+      <input type="checkbox" id="agree" required />
+      Zgadzam się na politykę prywatności, przetwarzanie danych i inne formalne bzdury.
+    </label>
+
+    <button type="submit">Dokonaj Zakupu</button>
+  </form>
+
+  <div class="summary" id="summary" style="display: none;"></div>
+  <div class="result" id="result" style="display: none;"></div>
+  <div class="error" id="error" style="display: none;">Błędne dane. Spróbuj ponownie.</div>
+
+  <script>
+    const form = document.getElementById('purchaseForm');
+    const result = document.getElementById('result');
+    const error = document.getElementById('error');
+    const summary = document.getElementById('summary');
+
+    const funMessages = [
+      'Weryfikuję Twoją tożsamość w systemie ministerialnym...',
+      'Przetwarzanie płatności przez centralę w Radomiu...',
+      'System wykrył podejrzenie nieopłaconych paczek z Allegro...',
+      'Łączenie z bankiem przez modem 56k...',
+      'Uruchamianie kalkulatora opłat w BASICu...'
+    ];
+
+    let formData = {};
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+
+      let amountInput = document.getElementById('amount').value.replace(',', '.');
+      const amount = parseFloat(amountInput);
+
+      if (isNaN(amount) || amount <= 0) {
+        error.style.display = 'block';
+        error.textContent = 'Podaj poprawną kwotę w formacie liczbowym, np. 6,99';
+        result.style.display = 'none';
+        summary.style.display = 'none';
+        return;
+      }
+
+      formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        amount: amount.toFixed(2)
+      };
+
+      const randomMessage = Math.random() < 0.2 ? `<em>${funMessages[Math.floor(Math.random() * funMessages.length)]}</em><br><br>` : '';
+
+      summary.innerHTML = `${randomMessage}<strong>Podsumowanie danych:</strong><br>
+        Imię i nazwisko: ${formData.name}<br>
+        E-mail: ${formData.email}<br>
+        Telefon: ${formData.phone}<br>
+        Kwota: ${formData.amount} zł<br><br>
+        <em>Przypominamy, że korzystanie z systemu wiąże się z opłatą obsługową w wysokości 0,10 zł za każdą transakcję. Przy zakupie większej ilości pakietów ta opłata jest rozkładana na całość, co czyni zakup bardziej opłacalnym.</em><br><br>
+        <em>W przypadku opóźnienia płatności, każdego dnia zostanie doliczona dodatkowa opłata w wysokości 50% kwoty podstawowej.</em><br><br>
+        <button class="confirm-button" id="finalConfirm">Potwierdź zakup</button>`;
+
+      summary.style.display = 'block';
+      result.style.display = 'none';
+      error.style.display = 'none';
+    });
+
+    document.body.addEventListener('click', function (e) {
+      if (e.target && e.target.id === 'finalConfirm') {
+        e.preventDefault();
+
+        // Losowa szansa na błąd
+        const random = Math.random();
+        if (random < 0.1) {
+          error.style.display = 'block';
+          error.textContent = 'Błędne dane. Spróbuj ponownie.';
+          result.style.display = 'none';
+          summary.style.display = 'none';
+          return;
+        }
+
+        const serviceFee = 0.10;
+        const baseAmount = parseFloat(formData.amount);
+        const totalAmount = (baseAmount + serviceFee).toFixed(2);
+        const dailyPenalty = (baseAmount * 0.5).toFixed(2);
+        const penaltyAfterTwoDays = (baseAmount + dailyPenalty * 2).toFixed(2);
+
+        result.innerHTML = `<strong>Udało się zakupić pakiet(y) za kwotę ${baseAmount.toFixed(2)} zł.</strong><br><br>
+          Do tej kwoty doliczono opłatę serwisową w wysokości ${serviceFee.toFixed(2)} zł, co daje sumę do zapłaty: <strong>${totalAmount} zł</strong>.<br><br>
+          Teraz zapłać wybraną kwotę autorowi. Po dokonaniu wpłaty, w ciągu 24 godzin wpisy pojawią się na blogu.<br><br>
+          W przypadku opóźnienia płatności, każdego dnia zostanie doliczona dodatkowa opłata w wysokości 50% kwoty podstawowej (${dailyPenalty} zł dziennie).<br>
+          Dla przykładu: po dwóch dniach opóźnienia zapłacisz już ${penaltyAfterTwoDays} zł. Lepiej nie zwlekać.`;
+
+        result.style.display = 'block';
+        summary.style.display = 'none';
+        error.style.display = 'none';
+        result.scrollIntoView({ behavior: 'smooth' });
+      }
+    });
+  </script>
+</body>
+</html>
+
+.
